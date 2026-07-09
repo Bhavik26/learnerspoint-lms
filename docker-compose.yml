@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: learnerspoint-db
+    restart: always
+    environment:
+      POSTGRES_DB: learnerspoint
+      POSTGRES_USER: bhavik
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bhavik -d learnerspoint"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - learnerspoint-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: learnerspoint-web
+    restart: always
+    ports:
+      - "0.0.0.0:3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://bhavik:password123@db:5432/learnerspoint?schema=public
+      - JWT_SECRET=super-secret-key-change-me-in-production-123456789
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-rzp_test_mockKey12345}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-mockSecretXYZ12345}
+      - NEXTAUTH_SECRET=super-secret-nextauth-key-123456789
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - learnerspoint-network
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  learnerspoint-network:
+    driver: bridge

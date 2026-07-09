@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+@theme {
+  /* Dynamic Custom Variable Mapping */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  
+  --color-brand-sky: var(--brand-sky);
+  --color-brand-sky-light: var(--brand-sky-light);
+  --color-background-custom: var(--background);
+  --color-surface: var(--surface);
+  --color-border-color: var(--border-color);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+
+  /* Intercept standard indigo/amber to map to Keen Infotech Blue/SkyBlue */
+  --color-indigo-50: var(--background);
+  --color-indigo-100: var(--background);
+  --color-indigo-200: var(--border-color);
+  --color-indigo-400: var(--primary);
+  --color-indigo-500: var(--primary);
+  --color-indigo-600: var(--primary);
+  --color-indigo-650: var(--primary);
+  --color-indigo-700: var(--primary-hover);
+  --color-indigo-950: var(--background);
+
+  --color-amber-50: var(--background);
+  --color-amber-200: var(--border-color);
+  --color-amber-500: var(--secondary);
+  --color-amber-600: var(--secondary);
+  --color-amber-700: var(--secondary-hover);
+
+  --font-sans: "Inter", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:root {
+  --background: #ffffff; /* Soft white layout canvas */
+  --foreground: #1f2937; /* Crisp charcoal text */
+  --surface: #ffffff;
+  --border-color: rgba(61, 191, 242, 0.25);
+  --text-main: #1f2937;
+  --text-muted: #4b5563;
+
+  --primary: #0062e6; /* Deep Corporate Blue */
+  --primary-hover: #004bb3;
+  --secondary: #3dbff2; /* Bright Sky Blue */
+  --secondary-hover: #59d0ff;
+
+  --brand-sky: #3dbff2;
+  --brand-sky-light: #59d0ff;
+
+  /* Backward Compatibility Variables */
+  --card-bg: #ffffff;
+  --border-main: rgba(61, 191, 242, 0.25);
+  --mono-code: #f1f5f9;
+  --brand: #0062e6;
+  --brand-hover: #004bb3;
+}
+
+[data-theme="dark"],
+.dark {
+  --background: #0f172a;
+  --foreground: #f9fafb;
+  --surface: #1e293b;
+  --border-color: rgba(61, 191, 242, 0.15);
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+
+  --primary: #0062e6;
+  --primary-hover: #004bb3;
+  --secondary: #3dbff2;
+  --secondary-hover: #59d0ff;
+
+  --brand-sky: #3dbff2;
+  --brand-sky-light: #59d0ff;
+
+  /* Backward Compatibility Variables */
+  --card-bg: #1e293b;
+  --border-main: rgba(61, 191, 242, 0.15);
+  --mono-code: #1e293b;
+  --brand: #0062e6;
+  --brand-hover: #004bb3;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* Slate-300 */
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569; /* Slate-600 */
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Dynamic quiz shaking animation for error states */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.2s ease-in-out 2;
+}
+
+@keyframes pulse-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-fast {
+  animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scanlines overlay for S3 players */
+.bg-scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg, 
+    rgba(255, 0, 0, 0.06), 
+    rgba(0, 255, 0, 0.02), 
+    rgba(0, 0, 255, 0.06)
+  );
+  background-size: 100% 4px, 6px 100%;
+}
+
+/* Premium blue shaded text selection */
+::selection {
+  background-color: rgba(61, 191, 242, 0.3) !important;
+  color: inherit !important;
+}
+::-moz-selection {
+  background-color: rgba(61, 191, 242, 0.3) !important;
+  color: inherit !important;
+}

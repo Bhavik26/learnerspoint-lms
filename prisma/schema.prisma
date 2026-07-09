@@ -1,0 +1,221 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum CourseCategory {
+  DEVELOPMENT
+  DATA_SCIENCE_AI
+  CYBERSECURITY
+  BUSINESS
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  phone        String?       @unique
+  passwordHash String
+  role         Role          @default(STUDENT)
+  createdAt    DateTime      @default(now())
+  enrollments  Enrollment[]
+  certificates Certificate[]
+  payments     Payment[]
+  bookings     Booking[]
+  userXP       UserXP?
+  cartItems    CartItem[]
+}
+
+model Course {
+  id               String            @id @default(uuid())
+  title            String
+  slug             String            @unique
+  description      String
+  price            Float             @default(0.0)
+  isPublished      Boolean           @default(false)
+  category         CourseCategory    @default(DEVELOPMENT)
+  modules          Module[]
+  enrollments      Enrollment[]
+  slots            CourseSlot[]
+  cartItems        CartItem[]
+  purchasedCourses PurchasedCourse[]
+  liveSessions     LiveSession[]
+  liveSlots        LiveSlot[]
+  recordedSessions RecordedSession[]
+}
+
+model Module {
+  id       String @id @default(uuid())
+  courseId String
+  title    String
+  order    Int
+  content  String // Markdown string format for course chapters
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quizzes  Quiz[]
+
+  @@unique([courseId, order])
+}
+
+model Quiz {
+  id        String     @id @default(uuid())
+  moduleId  String
+  title     String
+  xpReward  Int        @default(100) // XP granted upon successful passing score
+  questions Question[]
+  module    Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  quizId        String
+  questionText  String
+  options       String[] // Array of strings representing options
+  correctOption Int      // Index of the correct answer string array
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id                 String       @id @default(uuid())
+  userId             String
+  courseId           String
+  progressPercentage Float        @default(0.0)
+  aggregateScore     Float        @default(0.0) // Average score from quizzes
+  timeSpentSeconds   Int          @default(0) // Rolling active session stopwatch
+  isCompleted        Boolean      @default(false)
+  completedAt        DateTime?
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course             Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  certificate        Certificate?
+  booking            Booking?
+
+  @@unique([userId, courseId])
+}
+
+model CourseSlot {
+  id          String    @id @default(uuid())
+  courseId    String
+  date        DateTime
+  timeWindow  String
+  capacity    Int       @default(30)
+  bookedCount Int       @default(0)
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+
+  @@unique([courseId, date, timeWindow])
+}
+
+model Booking {
+  id           String     @id @default(uuid())
+  userId       String
+  enrollmentId String     @unique
+  slotId       String
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  slot         CourseSlot @relation(fields: [slotId], references: [id])
+}
+
+model Certificate {
+  id              String     @id @default(uuid()) // Acts as unique verification hash
+  userId          String
+  enrollmentId    String     @unique
+  issuedAt        DateTime   @default(now())
+  verificationUrl String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment      Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+}
+
+model UserXP {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  currentXp  Int      @default(0)
+  globalRank Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id               String            @id @default(uuid())
+  userId           String
+  amount           Float
+  currency         String            @default("INR")
+  gatewayOrderId   String            @unique
+  gatewayPaymentId String?
+  method           PaymentMethod
+  status           PaymentStatus     @default(PENDING)
+  createdAt        DateTime          @default(now())
+  user             User              @relation(fields: [userId], references: [id])
+  purchasedCourses PurchasedCourse[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+enum PaymentMethod {
+  UPI_INTENT
+  DYNAMIC_QR
+  CREDIT_DEBIT_CARD
+}
+
+model PurchasedCourse {
+  id        String  @id @default(uuid())
+  paymentId String
+  courseId  String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model LiveSession {
+  id            String   @id @default(uuid())
+  title         String
+  roomId        String   @unique
+  isStreaming   Boolean  @default(false)
+  recordingUrl  String?  // Target secure URL string path for the finalized recording file
+  createdAt     DateTime @default(now())
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model LiveSlot {
+  id          String   @id @default(uuid())
+  title       String
+  startTime   DateTime // Scheduled date and time for the class
+  endTime     DateTime // When the session ends
+  isLive      Boolean  @default(false)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model RecordedSession {
+  id          String   @id @default(uuid())
+  title       String
+  videoUrl    String   // Path or link to the stored recorded video file
+  createdAt   DateTime @default(now())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+

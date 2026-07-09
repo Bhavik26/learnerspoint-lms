@@ -1,0 +1,31 @@
+{
+  "appId": "com.learnerspoint.android",
+  "appName": "LearnersPoint",
+  "webDir": "out",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "http://10.0.2.2:3000",
+    "cleartext": true,
+    "androidScheme": "http",
+    "allowNavigation": [
+      "10.0.2.2:3000",
+      "192.168.1.21:3000",
+      "*.razorpay.com",
+      "*.google.com"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#3DBFF2",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": true,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#ffffff",
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  }
+}
