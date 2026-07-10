@@ -108,13 +108,13 @@ export default function Navbar({ user }: NavbarProps) {
 
   return (
     <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-0 z-50 transition-colors duration-300 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4.5 flex items-center justify-between gap-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4.5 flex items-center justify-between gap-2 sm:gap-6">
         
         {/* Left Side: Brand Logo and Text Links */}
-        <div className="flex items-center gap-6 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-6 shrink-0">
           <Link 
             href="/" 
-            className="font-extrabold tracking-tight text-2xl text-primary font-sans hover:opacity-90 transition-all flex items-center gap-1"
+            className="font-extrabold tracking-tight text-xl sm:text-2xl text-primary font-sans hover:opacity-90 transition-all flex items-center gap-0.5"
           >
             <span>LearnersPoint</span>
             <span className="text-secondary font-black">.</span>
@@ -151,7 +151,7 @@ export default function Navbar({ user }: NavbarProps) {
         </form>
 
         {/* Right Side: Additional links, theme, cart, and authentication */}
-        <div className="flex items-center gap-5 text-sm font-bold text-slate-600 dark:text-slate-305 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-5 text-sm font-bold text-slate-600 dark:text-slate-305 shrink-0">
           
           {/* Leaderboard Link */}
           <Link href="/leaderboard" className="hover:text-primary transition-colors hidden sm:block">
@@ -225,16 +225,16 @@ export default function Navbar({ user }: NavbarProps) {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Link 
                 href="/login" 
-                className="px-4 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold"
+                className="px-2.5 py-2 sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] sm:text-xs font-bold whitespace-nowrap"
               >
                 Log In
               </Link>
               <Link 
                 href="/register" 
-                className="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold shadow-sm animate-pulse-fast"
+                className="px-2.5 py-2 sm:px-4 sm:py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg text-[10px] sm:text-xs font-bold shadow-sm animate-pulse-fast whitespace-nowrap"
               >
                 Sign Up
               </Link>

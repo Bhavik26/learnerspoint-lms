@@ -4,12 +4,12 @@
   "webDir": "out",
   "bundledWebRuntime": false,
   "server": {
-    "url": "http://10.0.2.2:3000",
+    "url": "http://10.198.70.2:3000",
     "cleartext": true,
     "androidScheme": "http",
     "allowNavigation": [
+      "10.198.70.2:3000",
       "10.0.2.2:3000",
-      "192.168.1.21:3000",
       "*.razorpay.com",
       "*.google.com"
     ]

@@ -153,17 +153,17 @@ export default function CartPage() {
             {items.map((item) => (
               <div 
                 key={item.id} 
-                className="rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5 bg-white dark:bg-slate-950 shadow-sm hover:shadow-md transition-all duration-300 flex items-start justify-between gap-4"
+                className="rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5 bg-white dark:bg-slate-950 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
               >
-                <div className="space-y-1">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white uppercase truncate max-w-sm">{item.course.title}</h3>
+                <div className="space-y-1 w-full max-w-full block">
+                  <h3 className="font-bold text-slate-900 dark:text-white uppercase block text-sm sm:text-base whitespace-normal break-words leading-snug">{item.course.title}</h3>
                   <p className="text-xs text-slate-450 text-slate-400 font-medium line-clamp-2 leading-relaxed">{item.course.description}</p>
                 </div>
-                <div className="text-right flex flex-col justify-between items-end h-full min-w-[80px]">
-                  <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">₹{item.course.price.toLocaleString()}</span>
+                <div className="text-left sm:text-right flex flex-row sm:flex-col justify-between items-center sm:items-end w-full sm:w-auto gap-2 border-t sm:border-t-0 border-slate-100 dark:border-slate-900 pt-3 sm:pt-0 mt-1 sm:mt-0 min-w-[80px]">
+                  <span className="text-xs sm:text-sm font-extrabold text-indigo-650 text-indigo-600 dark:text-indigo-400">₹{item.course.price.toLocaleString()}</span>
                   <button
                     onClick={() => handleRemove(item.courseId)}
-                    className="text-[10px] font-bold text-red-500 hover:underline uppercase mt-4"
+                    className="text-[10px] font-bold text-red-500 hover:underline uppercase cursor-pointer"
                   >
                     Remove
                   </button>

@@ -10,7 +10,7 @@ describe('LearnersPoint Comprehensive Engine Diagnostics', () => {
     global.fetch = mockFetch;
 
     const dummyPayload = { userId: "user-123", courseId: "course-456", action: "ADD" };
-    const res = await fetch('http://192.168.1.21:3000/api/cart', {
+    const res = await fetch('http://10.198.70.2:3000/api/cart', {
       method: 'POST',
       body: JSON.stringify(dummyPayload)
     });
