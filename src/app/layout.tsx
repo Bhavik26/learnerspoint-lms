@@ -65,7 +65,7 @@ export default async function RootLayout({
                 var isCapacitor = window.location.origin.indexOf('capacitor://') === 0 || 
                                   (window.location.origin.indexOf('localhost') !== -1 && window.location.port !== '3000' && window.location.port !== '3001');
                 if (isCapacitor) {
-                  var backend = 'http://10.198.70.2:3000';
+                  var backend = 'http://192.168.1.102:3000';
                   var ua = window.navigator.userAgent.toLowerCase();
                   if (ua.indexOf('android') !== -1 && (ua.indexOf('sdk') !== -1 || ua.indexOf('google') !== -1 || ua.indexOf('emulator') !== -1)) {
                     backend = 'http://10.0.2.2:3000';

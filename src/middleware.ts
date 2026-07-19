@@ -25,12 +25,11 @@ export async function middleware(request: NextRequest) {
   const allowedOrigins = [
     "http://localhost",
     "capacitor://localhost",
-    "http://10.198.70.2:3000",
+    "http://192.168.1.102:3000",
     "http://10.0.2.2:3000"
   ];
   const isAllowedOrigin = allowedOrigins.includes(origin) || 
                           origin.startsWith("http://localhost:") || 
-                          origin.startsWith("http://10.198.70.") ||
                           origin.startsWith("http://192.168.");
 
   if (request.method === "OPTIONS") {
