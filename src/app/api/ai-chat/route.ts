@@ -1,4 +1,15 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rateLimit';
+
+const AIChatInputSchema = z.object({
+  prompt: z.string().trim().min(1, "Prompt string is empty").max(1000, "Prompt is too long"),
+  userId: z.string().trim().max(100).optional(),
+});
+
+function sanitizeInput(text: string): string {
+  return text.replace(/[<>'"]/g, "").trim();
+}
 
 function getLocalAIResponse(prompt: string): string {
   const query = prompt.toLowerCase().trim();
@@ -52,11 +63,30 @@ function getLocalAIResponse(prompt: string): string {
 
 export async function POST(req: Request) {
   try {
-    const { prompt, userId } = await req.json();
-
-    if (!prompt) {
-      return NextResponse.json({ success: false, error: "Prompt string is empty" }, { status: 400 });
+    // 1. Rate Limiting Check (Max 10 requests per minute)
+    const clientIp = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || req.headers.get("x-user-id") || "anonymous-client";
+    const rateCheck = checkRateLimit(`ai-chat-${clientIp}`, 10, 60000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { success: false, error: "Rate limit exceeded. Maximum 10 requests per minute allowed." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
     }
+
+    const body = await req.json();
+
+    // 2. Zod Schema Validation
+    const validationResult = AIChatInputSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { success: false, error: "Prompt string is empty or invalid format" },
+        { status: 400 }
+      );
+    }
+
+    // 3. Input Sanitization
+    const prompt = sanitizeInput(validationResult.data.prompt);
+    const userId = validationResult.data.userId ? sanitizeInput(validationResult.data.userId) : "Guest";
 
     const apiKey = process.env.AI_PROVIDER_API_KEY;
     if (!apiKey) {
@@ -66,7 +96,7 @@ export async function POST(req: Request) {
     }
 
     // Context System Instruction to make the AI act strictly as LearnersPoint support core
-    const systemContext = `You are the official LearnersPoint AI Training Assistant. Help the student (ID: ${userId || 'Guest'}) with their platform queries, courses like 'Core & Advanced Java Programming', or tech questions politely. Keep responses concise and scannable.`;
+    const systemContext = `You are the official LearnersPoint AI Training Assistant. Help the student (ID: ${userId}) with their platform queries, courses like 'Core & Advanced Java Programming', or tech questions politely. Keep responses concise and scannable.`;
 
     // Actual API invocation payload layout
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {

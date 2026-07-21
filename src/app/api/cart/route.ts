@@ -1,14 +1,28 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { z } from "zod";
+
+const CartInputSchema = z.object({
+  action: z.enum(["add", "remove", "clear"]).optional().default("add"),
+  courseId: z.string().trim().max(100).optional(),
+  userId: z.string().trim().max(100).optional(),
+});
+
+function sanitizeString(input: string): string {
+  return input.replace(/[<>'"]/g, "");
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryUserId = searchParams ? searchParams.get("userId") : null;
-  const userId = queryUserId || request.headers.get("x-user-id");
+  const headerUserId = request.headers.get("x-user-id");
+  const rawUserId = queryUserId || headerUserId;
 
-  if (!userId) {
+  if (!rawUserId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const userId = sanitizeString(rawUserId);
 
   try {
     const items = await db.cartItem.findMany({
@@ -29,24 +43,39 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { action = "add", courseId, userId: bodyUserId } = body;
-    const userId = bodyUserId || request.headers.get("x-user-id");
+    
+    // Zod schema validation
+    const validationResult = CartInputSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "Invalid payload format", details: validationResult.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-    if (!userId) {
+    const { action, courseId: rawCourseId, userId: bodyUserId } = validationResult.data;
+    const headerUserId = request.headers.get("x-user-id");
+    const rawUserId = bodyUserId || headerUserId;
+
+    if (!rawUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const userId = sanitizeString(rawUserId);
+    const courseId = rawCourseId ? sanitizeString(rawCourseId) : undefined;
 
     if (action === "clear") {
       await db.cartItem.deleteMany({ where: { userId } });
       return NextResponse.json({ success: true });
     }
 
-    if (!courseId) {
-      return NextResponse.json({ error: "Missing course ID" }, { status: 400 });
+    if (action === "add" || action === "remove") {
+      if (!courseId) {
+        return NextResponse.json({ error: "Missing course ID" }, { status: 400 });
+      }
     }
 
-    if (action === "add") {
-      // Core Prisma operation to upsert item records independently of client environment
+    if (action === "add" && courseId) {
       await db.cartItem.upsert({
         where: { userId_courseId: { userId, courseId } },
         update: {},
@@ -55,7 +84,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    if (action === "remove") {
+    if (action === "remove" && courseId) {
       await db.cartItem.deleteMany({
         where: { userId, courseId },
       });
