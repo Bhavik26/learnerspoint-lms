@@ -35,17 +35,6 @@ export default function Navbar({ user }: NavbarProps) {
     }
   }, []);
 
-  useEffect(() => {
-    // Register Capacitor deep linking listener dynamically on client browser mount
-    import("@/lib/mobileBridge").then(({ setupDeepLinks }) => {
-      setupDeepLinks(router, (token) => {
-        // Save the received OAuth token as a cookie
-        document.cookie = `token=${token}; path=/; max-age=${60*60*24*7}`;
-        // Force refresh page to trigger server layout validation
-        router.refresh();
-      });
-    });
-  }, [router]);
 
   useEffect(() => {
     if (user) {

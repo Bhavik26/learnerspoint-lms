@@ -57,35 +57,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var isCapacitor = window.location.origin.indexOf('capacitor://') === 0 || 
-                                  (window.location.origin.indexOf('localhost') !== -1 && window.location.port !== '3000' && window.location.port !== '3001');
-                if (isCapacitor) {
-                  var backend = 'http://192.168.1.102:3000';
-                  var ua = window.navigator.userAgent.toLowerCase();
-                  if (ua.indexOf('android') !== -1 && (ua.indexOf('sdk') !== -1 || ua.indexOf('google') !== -1 || ua.indexOf('emulator') !== -1)) {
-                    backend = 'http://10.0.2.2:3000';
-                  }
-                  var oldFetch = window.fetch;
-                  window.fetch = function(url, init) {
-                    init = init || {};
-                    init.credentials = 'include';
-                    if (typeof url === 'string' && url.indexOf('/') === 0) {
-                      url = backend + url;
-                    }
-                    return oldFetch(url, init);
-                  };
-                  console.log('[LearnersPoint Mobile Bridge] Redirecting API requests to:', backend);
-                }
-              })();
-            `
-          }}
-        />
-      </head>
+      <head />
       <body className="min-h-screen flex flex-col bg-background text-foreground transition-colors w-full max-w-full overflow-x-hidden selection:bg-[#3DBFF2]/30">
         <Navbar user={user} />
         <main className="flex-grow w-full">
