@@ -1,16 +1,46 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView, ScrollView } from 'react-native';
 import { apiRequest } from '../services/api';
 
 export default function SignupScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Captcha State variables
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState('Loading...');
+  const [captchaSignature, setCaptchaSignature] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  
   const [loading, setLoading] = useState(false);
+  const [fetchingCaptcha, setFetchingCaptcha] = useState(true);
+
+  const fetchCaptcha = async () => {
+    setFetchingCaptcha(true);
+    try {
+      const response = await apiRequest('/api/auth/captcha', { method: 'GET' });
+      if (response.captchaId) {
+        setCaptchaId(response.captchaId);
+        setCaptchaQuestion(response.question);
+        setCaptchaSignature(response.signature);
+      }
+    } catch (e: any) {
+      console.error('[Captcha Sync Error]', e);
+      setCaptchaQuestion('Failed to load captcha. Tap refresh.');
+    } finally {
+      setFetchingCaptcha(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
 
   const handleSignup = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Validation Error', 'Please fill in all input fields.');
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim() || !captchaAnswer.trim()) {
+      Alert.alert('Validation Error', 'Please fill in all inputs including the Captcha solution.');
       return;
     }
 
@@ -18,7 +48,15 @@ export default function SignupScreen({ navigation }: any) {
     try {
       const response = await apiRequest('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          password,
+          captchaId,
+          captchaAnswer: captchaAnswer.trim(),
+          captchaSignature
+        }),
       });
 
       if (response.success) {
@@ -29,10 +67,15 @@ export default function SignupScreen({ navigation }: any) {
         );
       } else {
         Alert.alert('Signup Failed', response.error || 'Registration failed');
+        // Refresh Captcha on error
+        fetchCaptcha();
+        setCaptchaAnswer('');
       }
     } catch (error: any) {
       console.error('[API Register Fault]', error);
       Alert.alert('Registration Error', error.message || 'Cannot establish network connection');
+      fetchCaptcha();
+      setCaptchaAnswer('');
     } finally {
       setLoading(false);
     }
@@ -40,57 +83,93 @@ export default function SignupScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.brandTitle}>LearnersPoint<Text style={styles.dot}>.</Text></Text>
-        <Text style={styles.subtitle}>Create your student credentials</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} style={styles.scrollView}>
+        <View style={styles.card}>
+          <Text style={styles.brandTitle}>LearnersPoint<Text style={styles.dot}>.</Text></Text>
+          <Text style={styles.subtitle}>Create your student credentials</Text>
 
-        <TextInput
-          placeholder="Full Name"
-          placeholderTextColor="#94a3b8"
-          value={name}
-          onChangeText={setName}
-          style={styles.input}
-        />
+          <TextInput
+            placeholder="Full Name"
+            placeholderTextColor="#94a3b8"
+            value={name}
+            onChangeText={setName}
+            style={styles.input}
+          />
 
-        <TextInput
-          placeholder="E-mail Address"
-          placeholderTextColor="#94a3b8"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <TextInput
+            placeholder="E-mail Address"
+            placeholderTextColor="#94a3b8"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#94a3b8"
-          value={password}
-          onChangeText={setPassword}
-          style={styles.input}
-          secureTextEntry
-          autoCapitalize="none"
-        />
+          <TextInput
+            placeholder="Phone Number"
+            placeholderTextColor="#94a3b8"
+            value={phone}
+            onChangeText={setPhone}
+            style={styles.input}
+            keyboardType="phone-pad"
+          />
 
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleSignup}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <Text style={styles.buttonText}>Register</Text>
-          )}
-        </TouchableOpacity>
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#94a3b8"
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+            secureTextEntry
+            autoCapitalize="none"
+          />
 
-        <View style={styles.footerRow}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.linkText}>Log In</Text>
+          {/* Captcha Box */}
+          <View style={styles.captchaBox}>
+            <View style={styles.captchaHeader}>
+              <Text style={styles.captchaLabel}>Security Verification</Text>
+              <TouchableOpacity onPress={fetchCaptcha} disabled={fetchingCaptcha}>
+                <Text style={styles.refreshBtnText}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.captchaQuestionRow}>
+              {fetchingCaptcha ? (
+                <ActivityIndicator size="small" color="#3DBFF2" />
+              ) : (
+                <Text style={styles.captchaQuestionText}>{captchaQuestion}</Text>
+              )}
+            </View>
+            <TextInput
+              placeholder="Your Answer"
+              placeholderTextColor="#64748b"
+              value={captchaAnswer}
+              onChangeText={setCaptchaAnswer}
+              style={styles.captchaInput}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={handleSignup}
+            disabled={loading || fetchingCaptcha}
+          >
+            {loading ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.buttonText}>Register</Text>
+            )}
           </TouchableOpacity>
+
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.linkText}>Log In</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -99,8 +178,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#030712',
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 32,
   },
   card: {
     width: '90%',
@@ -129,7 +215,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94a3b8',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     fontWeight: '600',
   },
   input: {
@@ -143,6 +229,54 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#334155',
+  },
+  captchaBox: {
+    width: '100%',
+    backgroundColor: '#020617',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  captchaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  captchaLabel: {
+    color: '#3DBFF2',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  refreshBtnText: {
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  captchaQuestionRow: {
+    marginVertical: 4,
+    height: 24,
+    justifyContent: 'center',
+  },
+  captchaQuestionText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+  },
+  captchaInput: {
+    width: '100%',
+    height: 40,
+    backgroundColor: '#0f172a',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    color: '#ffffff',
+    fontSize: 13,
+    borderWidth: 1,
+    borderColor: '#334155',
+    marginTop: 8,
   },
   button: {
     width: '100%',
