@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const BASE_URL = 'http://192.168.1.102:3000'; // Match current host Wi-Fi IP address
+export const BASE_URL = 'http://192.168.1.10:3000'; // Match current host Wi-Fi IP address
 
 export interface Course {
   id: string;
