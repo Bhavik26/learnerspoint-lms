@@ -13,7 +13,7 @@ const getBaseUrl = () => {
     return `http://${ip}:3000`;
   }
 
-  return 'http://192.168.1.10:3000'; // Fallback local Wi-Fi IP address
+  return 'http://192.168.1.2:3000'; // Fallback local Wi-Fi IP address
 };
 
 export const BASE_URL = getBaseUrl();
