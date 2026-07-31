@@ -1,6 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
-export const BASE_URL = 'http://192.168.1.10:3000'; // Match current host Wi-Fi IP address
+const getBaseUrl = () => {
+  if (Platform.OS === 'web') {
+    return 'http://localhost:3000';
+  }
+
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    return `http://${ip}:3000`;
+  }
+
+  return 'https://puny-parts-tell.loca.lt'; // Fallback localtunnel URL
+};
+
+export const BASE_URL = getBaseUrl();
+console.log('[LearnersPoint API] Dynamic BASE_URL:', BASE_URL);
 
 export interface Course {
   id: string;
@@ -70,8 +87,9 @@ export async function clearStoredSession(): Promise<void> {
 export async function apiRequest(path: string, options: RequestInit = {}): Promise<any> {
   const token = await getStoredToken();
   const headers = new Headers(options.headers || {});
-  
+
   headers.set('Content-Type', 'application/json');
+  headers.set('bypass-tunnel-reminder', 'true');
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Modal, TextInput, TouchableOpacity, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Modal, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest, getStoredUser } from '../services/api';
 
 export default function AiChatModal() {
@@ -146,11 +147,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B58CA',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'between',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(61, 191, 242, 0.3)',
-    justifyContent: 'space-between',
   },
   headerTitleGroup: {
     flexDirection: 'row',

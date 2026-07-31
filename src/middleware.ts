@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
     "http://localhost:3000",
     "http://localhost:8081",
     "http://127.0.0.1:8081",
-    "http://192.168.1.10:3000",
+    "http://192.168.1.2:3000",
     "http://10.198.70.2:3000",
     "http://10.0.2.2:3000"
   ];
@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
                           origin.startsWith("http://localhost:") || 
                           origin.startsWith("http://192.168.") ||
                           origin.startsWith("http://10.") ||
+                          origin.endsWith(".loca.lt") ||
                           origin.endsWith(".amazonaws.com");
 
   // Handle CORS OPTIONS preflight requests

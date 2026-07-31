@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest, setStoredSession } from '../services/api';
 
-export default function LoginScreen({ navigation, route }: any) {
+export default function LoginScreen({ navigation, route, onLoginSuccess }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,8 +32,9 @@ export default function LoginScreen({ navigation, route }: any) {
         });
 
         // Trigger session validation inside navigation state
-        if (route.params?.onLoginSuccess) {
-          route.params.onLoginSuccess();
+        const successCallback = onLoginSuccess || route?.params?.onLoginSuccess;
+        if (successCallback) {
+          successCallback();
         }
       } else {
         Alert.alert('Login Failed', response.error || 'Invalid credentials');

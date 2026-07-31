@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getStoredUser, clearStoredSession, UserSession } from '../services/api';
 
-export default function ProfileScreen({ route }: any) {
+export default function ProfileScreen({ route, onLogoutSuccess }: any) {
   const [user, setUser] = useState<UserSession | null>(null);
 
   useEffect(() => {
@@ -20,8 +21,9 @@ export default function ProfileScreen({ route }: any) {
           style: 'destructive',
           onPress: async () => {
             await clearStoredSession();
-            if (route.params?.onLogoutSuccess) {
-              route.params.onLogoutSuccess();
+            const logoutCallback = onLogoutSuccess || route?.params?.onLogoutSuccess;
+            if (logoutCallback) {
+              logoutCallback();
             }
           } 
         }

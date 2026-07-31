@@ -57,12 +57,12 @@ function MainTabNavigator({ onLogoutSuccess }: { onLogoutSuccess: () => void }) 
       />
       <Tab.Screen 
         name="Profile" 
-        component={ProfileScreen} 
-        initialParams={{ onLogoutSuccess }}
         options={{
           tabBarIcon: ({ focused }) => <TabIcon char="👤" focused={focused} />
         }}
-      />
+      >
+        {(props) => <ProfileScreen {...props} onLogoutSuccess={onLogoutSuccess} />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 }
@@ -82,9 +82,9 @@ export default function AppNavigator({ isLoggedIn, onLoginSuccess, onLogoutSucce
         <>
           <Stack.Screen 
             name="Login" 
-            component={LoginScreen} 
-            initialParams={{ onLoginSuccess }}
-          />
+          >
+            {(props) => <LoginScreen {...props} onLoginSuccess={onLoginSuccess} />}
+          </Stack.Screen>
           <Stack.Screen 
             name="Signup" 
             component={SignupScreen} 
