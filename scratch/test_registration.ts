@@ -1,15 +1,11 @@
-import { hashPassword, verifyPassword } from "../src/lib/auth";
-
-async function main() {
-  const plainPassword = "myNewPassword123";
-  
-  console.log("Hashing password:", plainPassword);
-  const hash = await hashPassword(plainPassword);
-  console.log("Generated hash:", hash);
-  
-  console.log("Verifying password...");
-  const isMatch = await verifyPassword(plainPassword, hash);
-  console.log("Verification result:", isMatch);
+async function test() {
+  try {
+    const res = await fetch("http://localhost:3000/api/auth/captcha");
+    console.log("Captcha status:", res.status);
+    const data = await res.json();
+    console.log("Captcha response:", data);
+  } catch (err) {
+    console.error("Test failed:", err);
+  }
 }
-
-main().catch(console.error);
+test();
