@@ -26,13 +26,14 @@ const getBaseUrl = () => {
 };
 
 export const BASE_URL = getBaseUrl();
+console.log('[LearnersPoint API] Dynamic BASE_URL:', BASE_URL);
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 15000, // Increased timeout to 15s to prevent premature cancellations
 });
 
 // Request Interceptor: Inject token and normalize double '/api' prefixes
@@ -60,7 +61,12 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('[apiClient Connection Fault]', error.response?.status, error.response?.data || error.message);
+    // Check if error is due to cancellation/abort
+    if (axios.isCancel(error) || error.code === 'ECONNABORTED' || error.message?.includes('canceled')) {
+      console.log('[apiClient] Request was cancelled or timed out.');
+    } else {
+      console.error('[apiClient Connection Fault]', error.response?.status, error.response?.data || error.message);
+    }
     return Promise.reject(error);
   }
 );

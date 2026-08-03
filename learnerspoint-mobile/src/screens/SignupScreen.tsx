@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
@@ -19,10 +19,18 @@ export default function SignupScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [fetchingCaptcha, setFetchingCaptcha] = useState(true);
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const fetchCaptcha = async () => {
+    // Abort any pending active captcha requests to avoid serial collisions
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     setFetchingCaptcha(true);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
+    abortControllerRef.current = controller;
+    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 seconds timeout
 
     try {
       const response = await apiRequest(`/api/auth/captcha?t=${Date.now()}`, {
@@ -38,11 +46,18 @@ export default function SignupScreen({ navigation }: any) {
         }
       }
     } catch (e: any) {
+      if (e.name === 'AbortError' || e.message?.includes('canceled') || e.message?.includes('aborted')) {
+        console.log('[SignupScreen] Captcha fetch was aborted silently.');
+        return;
+      }
       console.error('[Captcha Sync Error]', e);
       setCaptchaQuestion('Failed to load captcha. Tap refresh.');
     } finally {
       clearTimeout(timeoutId);
-      setFetchingCaptcha(false);
+      if (abortControllerRef.current === controller) {
+        setFetchingCaptcha(false);
+        abortControllerRef.current = null;
+      }
     }
   };
 
