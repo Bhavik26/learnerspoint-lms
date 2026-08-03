@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
+import CaptchaComponent from '../components/CaptchaComponent';
 
 export default function SignupScreen({ navigation }: any) {
   const [name, setName] = useState('');
@@ -9,76 +10,17 @@ export default function SignupScreen({ navigation }: any) {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   
-  // Captcha State variables
-  const [captchaId, setCaptchaId] = useState('');
-  const [captchaQuestion, setCaptchaQuestion] = useState('Loading...');
-  const [captchaSignature, setCaptchaSignature] = useState('');
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
-  const [captchaImage, setCaptchaImage] = useState('');
-  const [clientFallbackAnswer, setClientFallbackAnswer] = useState('');
-  
+  const [captchaData, setCaptchaData] = useState({
+    captchaId: '',
+    captchaAnswer: '',
+    captchaSignature: '',
+    clientFallbackAnswer: ''
+  });
+
   const [loading, setLoading] = useState(false);
-  const [fetchingCaptcha, setFetchingCaptcha] = useState(true);
-
-  const generateFallbackCaptcha = () => {
-    const n1 = Math.floor(Math.random() * 10) + 1;
-    const n2 = Math.floor(Math.random() * 10) + 1;
-    const ans = n1 + n2;
-    setCaptchaId("client-fallback");
-    setCaptchaQuestion(`Solve: ${n1} + ${n2}`);
-    setCaptchaSignature("client-fallback-signature");
-    setClientFallbackAnswer(ans.toString());
-    setCaptchaImage('');
-    setFetchingCaptcha(false);
-  };
-
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const fetchCaptcha = async () => {
-    // Abort any pending active captcha requests to avoid serial collisions
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    setFetchingCaptcha(true);
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
-
-    try {
-      const response = await apiRequest(`/api/auth/captcha?t=${Date.now()}`, {
-        method: 'GET',
-        signal: controller.signal
-      });
-      if (response.captchaId) {
-        setCaptchaId(response.captchaId);
-        setCaptchaQuestion(response.question);
-        setCaptchaSignature(response.signature);
-        if (response.image) {
-          setCaptchaImage(response.image);
-        }
-      }
-    } catch (e: any) {
-      if (e.name === 'AbortError' || e.message?.includes('canceled') || e.message?.includes('aborted')) {
-        console.log('[SignupScreen] Captcha fetch timed out. Falling back to local captcha.');
-      } else {
-        console.error('[Captcha Sync Error] Falling back to local captcha:', e);
-      }
-      generateFallbackCaptcha();
-    } finally {
-      clearTimeout(timeoutId);
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null;
-      }
-    }
-  };
-
-  useEffect(() => {
-    fetchCaptcha();
-  }, []);
 
   const handleSignup = async () => {
-    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim() || !captchaAnswer.trim()) {
+    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim() || !captchaData.captchaAnswer.trim()) {
       Alert.alert('Validation Error', 'Please fill in all inputs including the Captcha solution.');
       return;
     }
@@ -92,10 +34,10 @@ export default function SignupScreen({ navigation }: any) {
           email: email.trim(),
           phone: phone.trim(),
           password,
-          captchaId,
-          captchaAnswer: captchaAnswer.trim(),
-          captchaSignature,
-          clientFallbackAnswer
+          captchaId: captchaData.captchaId,
+          captchaAnswer: captchaData.captchaAnswer.trim(),
+          captchaSignature: captchaData.captchaSignature,
+          clientFallbackAnswer: captchaData.clientFallbackAnswer
         }),
       });
 
@@ -107,15 +49,10 @@ export default function SignupScreen({ navigation }: any) {
         );
       } else {
         Alert.alert('Signup Failed', response.error || 'Registration failed');
-        // Refresh Captcha on error
-        fetchCaptcha();
-        setCaptchaAnswer('');
       }
     } catch (error: any) {
       console.error('[API Register Fault]', error);
       Alert.alert('Registration Error', error.message || 'Cannot establish network connection');
-      fetchCaptcha();
-      setCaptchaAnswer('');
     } finally {
       setLoading(false);
     }
@@ -166,35 +103,7 @@ export default function SignupScreen({ navigation }: any) {
           />
 
           {/* Captcha Box */}
-          <View style={styles.captchaBox}>
-            <View style={styles.captchaHeader}>
-              <Text style={styles.captchaLabel}>Security Verification</Text>
-              <TouchableOpacity onPress={fetchCaptcha} disabled={fetchingCaptcha}>
-                <Text style={styles.refreshBtnText}>Refresh</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.captchaQuestionRow}>
-              {fetchingCaptcha ? (
-                <ActivityIndicator size="small" color="#3DBFF2" />
-              ) : (Platform.OS === 'web' && captchaImage) ? (
-                <Image 
-                  source={{ uri: captchaImage }} 
-                  style={styles.captchaImage} 
-                  resizeMode="contain"
-                />
-              ) : (
-                <Text style={styles.captchaQuestionText}>{captchaQuestion}</Text>
-              )}
-            </View>
-            <TextInput
-              placeholder="Your Answer"
-              placeholderTextColor="#64748b"
-              value={captchaAnswer}
-              onChangeText={setCaptchaAnswer}
-              style={styles.captchaInput}
-              keyboardType="numeric"
-            />
-          </View>
+          <CaptchaComponent onCaptchaVerify={setCaptchaData} />
 
           <TouchableOpacity 
             style={styles.button} 
