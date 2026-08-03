@@ -12,7 +12,7 @@ if (Platform.OS !== 'web') {
   statusCodes = nativeModule.statusCodes;
 }
 
-export default function GoogleLoginButton({ onLoginSuccess, onLoadingStateChange }: any) {
+export default function GoogleLoginButton({ onLoginSuccess, onLoadingStateChange }) {
   const [loading, setLoading] = React.useState(false);
 
   const setLocalLoading = (state) => {
@@ -87,7 +87,7 @@ export default function GoogleLoginButton({ onLoginSuccess, onLoadingStateChange
       }
 
       await handleGoogleAuthToken(idToken);
-    } catch (error: any) {
+    } catch (error) {
       if (statusCodes && error.code === statusCodes.SIGN_IN_CANCELLED) {
         console.log('[GoogleSignin] Sign in cancelled by user.');
       } else if (statusCodes && error.code === statusCodes.IN_PROGRESS) {
