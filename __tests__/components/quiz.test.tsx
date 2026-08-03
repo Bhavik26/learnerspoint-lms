@@ -2,6 +2,10 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import QuizPlayerClient from "@/app/courses/[slug]/quiz/[quizId]/QuizPlayerClient";
 
+jest.mock("next/link", () => {
+  return ({ children, href }: any) => <a href={href}>{children}</a>;
+});
+
 // Mock React.use to return resolved params synchronously for testing stability under React 19
 jest.mock("react", () => {
   const original = jest.requireActual("react");

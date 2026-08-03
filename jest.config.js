@@ -4,6 +4,7 @@ module.exports = {
   setupFilesAfterEnv: ["@testing-library/jest-dom"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^next/link$": "<rootDir>/node_modules/next/dist/client/link.js",
   },
   testPathIgnorePatterns: [
     "<rootDir>/.next/",

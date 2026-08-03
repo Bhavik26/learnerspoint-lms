@@ -32,11 +32,26 @@ export async function GET() {
   const captchaId = crypto.randomUUID();
   const question = `Solve: ${num1} ${operator} ${num2}`;
   
+  // Generate lightweight, fast visual SVG captcha image (dark card theme)
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="50" viewBox="0 0 160 50">
+    <rect width="100%" height="100%" fill="#020617"/>
+    <!-- Noise lines to deter OCR scraping bots -->
+    <line x1="10" y1="12" x2="150" y2="38" stroke="#1e293b" stroke-width="2"/>
+    <line x1="20" y1="38" x2="140" y2="12" stroke="#334155" stroke-width="1.5"/>
+    <line x1="5" y1="25" x2="155" y2="25" stroke="#0f172a" stroke-width="2"/>
+    <!-- Question label rendering -->
+    <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="18" font-weight="bold" fill="#3DBFF2" letter-spacing="1">
+      ${question}
+    </text>
+  </svg>`;
+  
+  const base64Svg = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
   const signature = await generateCaptchaSignature(captchaId, answer.toString(), JWT_SECRET);
   
   return NextResponse.json({
     captchaId,
     question,
+    image: base64Svg,
     signature
   });
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
 
@@ -14,23 +14,34 @@ export default function SignupScreen({ navigation }: any) {
   const [captchaQuestion, setCaptchaQuestion] = useState('Loading...');
   const [captchaSignature, setCaptchaSignature] = useState('');
   const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaImage, setCaptchaImage] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [fetchingCaptcha, setFetchingCaptcha] = useState(true);
 
   const fetchCaptcha = async () => {
     setFetchingCaptcha(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout
+
     try {
-      const response = await apiRequest('/api/auth/captcha', { method: 'GET' });
+      const response = await apiRequest(`/api/auth/captcha?t=${Date.now()}`, {
+        method: 'GET',
+        signal: controller.signal
+      });
       if (response.captchaId) {
         setCaptchaId(response.captchaId);
         setCaptchaQuestion(response.question);
         setCaptchaSignature(response.signature);
+        if (response.image) {
+          setCaptchaImage(response.image);
+        }
       }
     } catch (e: any) {
       console.error('[Captcha Sync Error]', e);
       setCaptchaQuestion('Failed to load captcha. Tap refresh.');
     } finally {
+      clearTimeout(timeoutId);
       setFetchingCaptcha(false);
     }
   };
@@ -137,6 +148,12 @@ export default function SignupScreen({ navigation }: any) {
             <View style={styles.captchaQuestionRow}>
               {fetchingCaptcha ? (
                 <ActivityIndicator size="small" color="#3DBFF2" />
+              ) : captchaImage ? (
+                <Image 
+                  source={{ uri: captchaImage }} 
+                  style={styles.captchaImage} 
+                  resizeMode="contain"
+                />
               ) : (
                 <Text style={styles.captchaQuestionText}>{captchaQuestion}</Text>
               )}
@@ -258,8 +275,13 @@ const styles = StyleSheet.create({
   },
   captchaQuestionRow: {
     marginVertical: 4,
-    height: 24,
+    height: 50,
     justifyContent: 'center',
+  },
+  captchaImage: {
+    width: 160,
+    height: 50,
+    borderRadius: 4,
   },
   captchaQuestionText: {
     color: '#ffffff',

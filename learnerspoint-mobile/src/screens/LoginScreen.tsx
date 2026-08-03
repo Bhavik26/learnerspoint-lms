@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest, setStoredSession } from '../services/api';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 
 export default function LoginScreen({ navigation, route, onLoginSuccess }: any) {
   const [email, setEmail] = useState('');
@@ -84,6 +85,11 @@ export default function LoginScreen({ navigation, route, onLoginSuccess }: any) 
             <Text style={styles.buttonText}>Log In</Text>
           )}
         </TouchableOpacity>
+
+        <GoogleLoginButton 
+          onLoginSuccess={onLoginSuccess || route?.params?.onLoginSuccess}
+          onLoadingStateChange={setLoading}
+        />
 
         <View style={styles.footerRow}>
           <Text style={styles.footerText}>New to LearnersPoint? </Text>
