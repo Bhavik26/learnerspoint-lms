@@ -16,7 +16,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1076.0",
     "@prisma/client": "^6.19.3",
     "google-auth-library": "^11.0.0",
-    "next": "^16.2.12",
+    "next": "16.2.9",
     "razorpay": "^2.9.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -44,5 +45,13 @@
     "ts-jest": "^29.4.11",
     "tsx": "^4.22.4",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "es5-ext@0.10.64": true,
+    "esbuild@0.28.1": true,
+    "prisma@6.19.3": true,
+    "unrs-resolver@1.12.2": true
   }
 }
