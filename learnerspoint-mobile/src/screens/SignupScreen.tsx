@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
 
@@ -30,7 +30,7 @@ export default function SignupScreen({ navigation }: any) {
     setFetchingCaptcha(true);
     const controller = new AbortController();
     abortControllerRef.current = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 seconds timeout to prevent premature cancellations
 
     try {
       const response = await apiRequest(`/api/auth/captcha?t=${Date.now()}`, {
@@ -163,7 +163,7 @@ export default function SignupScreen({ navigation }: any) {
             <View style={styles.captchaQuestionRow}>
               {fetchingCaptcha ? (
                 <ActivityIndicator size="small" color="#3DBFF2" />
-              ) : captchaImage ? (
+              ) : (Platform.OS === 'web' && captchaImage) ? (
                 <Image 
                   source={{ uri: captchaImage }} 
                   style={styles.captchaImage} 

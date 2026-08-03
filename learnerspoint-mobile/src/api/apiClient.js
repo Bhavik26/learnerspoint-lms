@@ -39,6 +39,8 @@ const apiClient = axios.create({
 // Request Interceptor: Inject token and normalize double '/api' prefixes
 apiClient.interceptors.request.use(
   async (config) => {
+    config.headers['x-client-platform'] = Platform.OS;
+
     // Prevent double '/api/api' path concatenation if url has a leading '/api'
     if (config.baseURL?.endsWith('/api') && config.url?.startsWith('/api/')) {
       config.url = config.url.replace('/api/', '/');

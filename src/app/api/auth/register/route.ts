@@ -11,14 +11,21 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { name, email, phone, password, captchaId, captchaAnswer, captchaSignature } = body;
-    
-    if (!name || !email || !phone || !password || !captchaId || !captchaAnswer || !captchaSignature) {
+    const clientPlatform = request.headers.get("x-client-platform") || "";
+    const isMobile = clientPlatform === "android" || clientPlatform === "ios";
+
+    if (!name || !email || !phone || !password) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-    
-    const expectedSignature = await generateCaptchaSignature(captchaId, captchaAnswer, JWT_SECRET);
-    if (expectedSignature !== captchaSignature) {
-      return NextResponse.json({ error: "Incorrect Captcha solution. Please try again." }, { status: 400 });
+
+    if (!isMobile) {
+      if (!captchaId || !captchaAnswer || !captchaSignature) {
+        return NextResponse.json({ error: "Missing Captcha validation fields" }, { status: 400 });
+      }
+      const expectedSignature = await generateCaptchaSignature(captchaId, captchaAnswer, JWT_SECRET);
+      if (expectedSignature !== captchaSignature) {
+        return NextResponse.json({ error: "Incorrect Captcha solution. Please try again." }, { status: 400 });
+      }
     }
     
     const normalizedEmail = email.trim().toLowerCase();

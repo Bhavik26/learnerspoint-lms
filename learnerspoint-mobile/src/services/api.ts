@@ -98,6 +98,7 @@ export async function apiRequest(path: string, options: RequestInit = {}): Promi
 
   headers.set('Content-Type', 'application/json');
   headers.set('bypass-tunnel-reminder', 'true');
+  headers.set('x-client-platform', Platform.OS);
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
