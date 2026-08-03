@@ -15,9 +15,22 @@ export default function SignupScreen({ navigation }: any) {
   const [captchaSignature, setCaptchaSignature] = useState('');
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [captchaImage, setCaptchaImage] = useState('');
+  const [clientFallbackAnswer, setClientFallbackAnswer] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [fetchingCaptcha, setFetchingCaptcha] = useState(true);
+
+  const generateFallbackCaptcha = () => {
+    const n1 = Math.floor(Math.random() * 10) + 1;
+    const n2 = Math.floor(Math.random() * 10) + 1;
+    const ans = n1 + n2;
+    setCaptchaId("client-fallback");
+    setCaptchaQuestion(`Solve: ${n1} + ${n2}`);
+    setCaptchaSignature("client-fallback-signature");
+    setClientFallbackAnswer(ans.toString());
+    setCaptchaImage('');
+    setFetchingCaptcha(false);
+  };
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -30,7 +43,7 @@ export default function SignupScreen({ navigation }: any) {
     setFetchingCaptcha(true);
     const controller = new AbortController();
     abortControllerRef.current = controller;
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 seconds timeout to prevent premature cancellations
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
 
     try {
       const response = await apiRequest(`/api/auth/captcha?t=${Date.now()}`, {
@@ -47,15 +60,14 @@ export default function SignupScreen({ navigation }: any) {
       }
     } catch (e: any) {
       if (e.name === 'AbortError' || e.message?.includes('canceled') || e.message?.includes('aborted')) {
-        console.log('[SignupScreen] Captcha fetch was aborted silently.');
-        return;
+        console.log('[SignupScreen] Captcha fetch timed out. Falling back to local captcha.');
+      } else {
+        console.error('[Captcha Sync Error] Falling back to local captcha:', e);
       }
-      console.error('[Captcha Sync Error]', e);
-      setCaptchaQuestion('Failed to load captcha. Tap refresh.');
+      generateFallbackCaptcha();
     } finally {
       clearTimeout(timeoutId);
       if (abortControllerRef.current === controller) {
-        setFetchingCaptcha(false);
         abortControllerRef.current = null;
       }
     }
@@ -82,7 +94,8 @@ export default function SignupScreen({ navigation }: any) {
           password,
           captchaId,
           captchaAnswer: captchaAnswer.trim(),
-          captchaSignature
+          captchaSignature,
+          clientFallbackAnswer
         }),
       });
 

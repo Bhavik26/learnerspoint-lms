@@ -10,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me-in-prod
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, phone, password, captchaId, captchaAnswer, captchaSignature } = body;
+    const { name, email, phone, password, captchaId, captchaAnswer, captchaSignature, clientFallbackAnswer } = body;
     const clientPlatform = request.headers.get("x-client-platform") || "";
     const isMobile = clientPlatform === "android" || clientPlatform === "ios";
 
@@ -18,7 +18,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!isMobile) {
+    // Always validate client-side generated math fallback captcha if present
+    if (captchaId === "client-fallback") {
+      if (!clientFallbackAnswer || captchaAnswer.trim() !== clientFallbackAnswer.trim()) {
+        return NextResponse.json({ error: "Incorrect Captcha solution. Please try again." }, { status: 400 });
+      }
+    } else if (!isMobile) {
+      // Standard Captcha validation for web / browser clients
       if (!captchaId || !captchaAnswer || !captchaSignature) {
         return NextResponse.json({ error: "Missing Captcha validation fields" }, { status: 400 });
       }
