@@ -3,17 +3,25 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 const getBaseUrl = () => {
+  // 1. Primary: EXPO_PUBLIC_API_URL environment variable
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL.replace(/\/api$/, '');
+  }
+
+  // 2. Secondary: Web Client localhost
   if (Platform.OS === 'web') {
     return 'http://localhost:3000';
   }
 
+  // 3. Tertiary: Mobile Dynamic hostUri detection
   const hostUri = Constants.expoConfig?.hostUri;
   if (hostUri) {
     const ip = hostUri.split(':')[0];
     return `http://${ip}:3000`;
   }
 
-  return 'http://192.168.1.2:3000'; // Fallback local Wi-Fi IP address
+  // Final Fallback: Active local IP
+  return 'http://192.168.1.2:3000';
 };
 
 export const BASE_URL = getBaseUrl();
