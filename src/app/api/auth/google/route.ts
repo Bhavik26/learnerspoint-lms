@@ -61,8 +61,8 @@ export async function POST(request: Request) {
       email = "google_sandbox_user@learnerspoint.com";
       name = "Google Sandbox User";
     } else {
-      const clientId = process.env.GOOGLE_CLIENT_ID;
-      if (!clientId || clientId === "your-google-client-id") {
+      const clientId = process.env.GOOGLE_WEB_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+      if (!clientId || clientId === "your-google-client-id" || clientId === "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com") {
         return NextResponse.json({ error: "Google OAuth is not configured on the server" }, { status: 501 });
       }
 

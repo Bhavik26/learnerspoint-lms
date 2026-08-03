@@ -1,20 +1,18 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiRequest, setStoredSession } from '../services/api';
 
-WebBrowser.maybeCompleteAuthSession();
+// Conditionally require the native Google Sign-in module to prevent web compilation crashes
+let GoogleSignin = null;
+let statusCodes = null;
+if (Platform.OS !== 'web') {
+  const nativeModule = require('@react-native-google-signin/google-signin');
+  GoogleSignin = nativeModule.GoogleSignin;
+  statusCodes = nativeModule.statusCodes;
+}
 
 export default function GoogleLoginButton({ onLoginSuccess, onLoadingStateChange }: any) {
-  // Replace these with your Client IDs in production
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID || 'mock-android-id',
-    iosClientId: process.env.EXPO_PUBLIC_IOS_CLIENT_ID || 'mock-ios-id',
-    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID || 'mock-web-id',
-  });
-
   const [loading, setLoading] = React.useState(false);
 
   const setLocalLoading = (state) => {
@@ -25,12 +23,13 @@ export default function GoogleLoginButton({ onLoginSuccess, onLoadingStateChange
   };
 
   useEffect(() => {
-    if (response?.type === 'success' && response.authentication?.idToken) {
-      handleGoogleAuthToken(response.authentication.idToken);
-    } else if (response?.type === 'error') {
-      Alert.alert('Google Sign-In Error', 'Unable to complete sign-in with Google.');
+    if (Platform.OS !== 'web' && GoogleSignin) {
+      GoogleSignin.configure({
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'mock-web-client-id.apps.googleusercontent.com',
+        offlineAccess: false,
+      });
     }
-  }, [response]);
+  }, []);
 
   const handleGoogleAuthToken = async (idToken) => {
     setLocalLoading(true);
@@ -56,32 +55,52 @@ export default function GoogleLoginButton({ onLoginSuccess, onLoadingStateChange
         Alert.alert('Authentication Failed', result.error || 'Unable to register Google session');
       }
     } catch (error) {
-      console.error('[Google Auth Error]', error);
+      console.error('[Google Auth Backend Error]', error);
       Alert.alert('Network Error', 'Cannot establish connection to authentication server.');
     } finally {
       setLocalLoading(false);
     }
   };
 
-  const handlePress = () => {
-    // If no client IDs are configured in development, offer sandbox login
-    const isMockAndroid = !process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID;
-    const isMockWeb = !process.env.EXPO_PUBLIC_WEB_CLIENT_ID;
+  const handlePress = async () => {
+    // 1. Web Flow: Redirect directly to Next.js Web Google Auth
+    if (Platform.OS === 'web') {
+      const baseUrlClean = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/api$/, '');
+      window.location.href = `${baseUrlClean}/api/auth/google`;
+      return;
+    }
 
-    if (isMockAndroid && isMockWeb) {
-      Alert.alert(
-        'Sandbox Mode Active',
-        'Google OAuth IDs are not configured. Would you like to log in with a mock sandbox instructor profile?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Yes, Sandbox Login', onPress: () => handleGoogleAuthToken('mock_oauth_success_token') }
-        ]
-      );
+    // 2. Native Flow
+    if (!GoogleSignin) {
+      Alert.alert('Configuration Error', 'Native Google Sign-in library is not loaded.');
       return;
     }
 
     setLocalLoading(true);
-    promptAsync().finally(() => setLocalLoading(false));
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.data?.idToken || userInfo.idToken;
+
+      if (!idToken) {
+        throw new Error('Google Sign-In failed to generate a valid ID token.');
+      }
+
+      await handleGoogleAuthToken(idToken);
+    } catch (error: any) {
+      if (statusCodes && error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('[GoogleSignin] Sign in cancelled by user.');
+      } else if (statusCodes && error.code === statusCodes.IN_PROGRESS) {
+        console.log('[GoogleSignin] Sign in already in progress.');
+      } else if (statusCodes && error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Google Play Services', 'Google Play Services are not available or outdated.');
+      } else {
+        console.error('[Google Sign-In Exception]', error);
+        Alert.alert('Google Sign-In Error', error.message || 'An unexpected error occurred during Google Sign-in.');
+      }
+    } finally {
+      setLocalLoading(false);
+    }
   };
 
   return (
