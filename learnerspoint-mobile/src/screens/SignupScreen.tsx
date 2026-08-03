@@ -108,7 +108,7 @@ export default function SignupScreen({ navigation }: any) {
           <TouchableOpacity 
             style={styles.button} 
             onPress={handleSignup}
-            disabled={loading || fetchingCaptcha}
+            disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#ffffff" />
