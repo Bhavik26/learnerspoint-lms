@@ -7,9 +7,13 @@ import { apiRequest, setStoredSession } from '../services/api';
 let GoogleSignin = null;
 let statusCodes = null;
 if (Platform.OS !== 'web') {
-  const nativeModule = require('@react-native-google-signin/google-signin');
-  GoogleSignin = nativeModule.GoogleSignin;
-  statusCodes = nativeModule.statusCodes;
+  try {
+    const nativeModule = require('@react-native-google-signin/google-signin');
+    GoogleSignin = nativeModule.GoogleSignin;
+    statusCodes = nativeModule.statusCodes;
+  } catch (e) {
+    console.warn('Google Sign-In module not found or running in unsupported environment.');
+  }
 }
 
 export default function GoogleLoginButton({ onLoginSuccess, onLoadingStateChange }) {
@@ -72,7 +76,7 @@ export default function GoogleLoginButton({ onLoginSuccess, onLoadingStateChange
 
     // 2. Native Flow
     if (!GoogleSignin) {
-      Alert.alert('Configuration Error', 'Native Google Sign-in library is not loaded.');
+      Alert.alert('Google Sign-In', 'Google Sign-In is only available in custom development builds.');
       return;
     }
 

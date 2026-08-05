@@ -18,7 +18,7 @@ export async function GET() {
           slug: c.slug,
           description: c.description,
           price: c.price,
-          category: c.category || "DEVELOPMENT",
+          category: (c as any).category || "DEVELOPMENT",
         }))
       });
     }
@@ -33,7 +33,7 @@ export async function GET() {
     slug: c.slug,
     description: c.description,
     price: c.price,
-    category: c.category || "DEVELOPMENT",
+    category: (c as any).category || "DEVELOPMENT",
   }));
 
   return NextResponse.json({

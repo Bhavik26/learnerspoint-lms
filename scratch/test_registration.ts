@@ -1,3 +1,5 @@
+export {};
+
 async function test() {
   try {
     const res = await fetch("http://localhost:3000/api/auth/captcha");

@@ -22,10 +22,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-web-browser",
-      "@react-native-google-signin/google-signin"
-    ]
+    }
   }
 }

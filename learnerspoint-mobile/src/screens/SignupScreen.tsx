@@ -1,7 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Image, Platform } from 'react-native';
+import React, { useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import CaptchaComponent from '../components/CaptchaComponent';
 
 export default function SignupScreen({ navigation }: any) {
@@ -9,18 +20,24 @@ export default function SignupScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  
+
   const [captchaData, setCaptchaData] = useState({
     captchaId: '',
     captchaAnswer: '',
     captchaSignature: '',
-    clientFallbackAnswer: ''
+    clientFallbackAnswer: '',
   });
 
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
-    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim() || !captchaData.captchaAnswer.trim()) {
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !password.trim() ||
+      !captchaData.captchaAnswer.trim()
+    ) {
       Alert.alert('Validation Error', 'Please fill in all inputs including the Captcha solution.');
       return;
     }
@@ -37,13 +54,17 @@ export default function SignupScreen({ navigation }: any) {
           captchaId: captchaData.captchaId,
           captchaAnswer: captchaData.captchaAnswer.trim(),
           captchaSignature: captchaData.captchaSignature,
-          clientFallbackAnswer: captchaData.clientFallbackAnswer
+          clientFallbackAnswer: captchaData.clientFallbackAnswer,
         }),
       });
 
       if (response.success) {
+        if (response.token) {
+          await AsyncStorage.setItem('userToken', response.token);
+          await AsyncStorage.setItem('token', response.token);
+        }
         Alert.alert(
-          'Registration Success', 
+          'Registration Success',
           'Account created successfully! Please log in.',
           [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
@@ -52,7 +73,8 @@ export default function SignupScreen({ navigation }: any) {
       }
     } catch (error: any) {
       console.error('[API Register Fault]', error);
-      Alert.alert('Registration Error', error.message || 'Cannot establish network connection');
+      const errMsg = error.message || error.error || 'Cannot establish network connection';
+      Alert.alert('Registration Error', errMsg);
     } finally {
       setLoading(false);
     }
@@ -105,8 +127,8 @@ export default function SignupScreen({ navigation }: any) {
           {/* Captcha Box */}
           <CaptchaComponent onCaptchaVerify={setCaptchaData} />
 
-          <TouchableOpacity 
-            style={styles.button} 
+          <TouchableOpacity
+            style={styles.button}
             onPress={handleSignup}
             disabled={loading}
           >
@@ -184,59 +206,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#334155',
-  },
-  captchaBox: {
-    width: '100%',
-    backgroundColor: '#020617',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  captchaHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  captchaLabel: {
-    color: '#3DBFF2',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  refreshBtnText: {
-    color: '#94a3b8',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  captchaQuestionRow: {
-    marginVertical: 4,
-    height: 50,
-    justifyContent: 'center',
-  },
-  captchaImage: {
-    width: 160,
-    height: 50,
-    borderRadius: 4,
-  },
-  captchaQuestionText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-  },
-  captchaInput: {
-    width: '100%',
-    height: 40,
-    backgroundColor: '#0f172a',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    color: '#ffffff',
-    fontSize: 13,
-    borderWidth: 1,
-    borderColor: '#334155',
-    marginTop: 8,
   },
   button: {
     width: '100%',

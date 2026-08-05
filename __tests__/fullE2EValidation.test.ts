@@ -7,7 +7,7 @@ describe('LearnersPoint Comprehensive Engine Diagnostics', () => {
         json: () => Promise.resolve({ success: true })
       } as Response)
     );
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as unknown as typeof fetch;
 
     const dummyPayload = { userId: "user-123", courseId: "course-456", action: "ADD" };
     const res = await fetch('http://192.168.1.2:3000/api/cart', {

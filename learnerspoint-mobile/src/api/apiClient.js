@@ -4,29 +4,29 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 const getBaseUrl = () => {
-  // 1. Primary: EXPO_PUBLIC_API_URL environment variable (Localtunnel / Ngrok)
+  // 1️⃣ EXPO_PUBLIC_API_URL (localtunnel/ngrok)
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // 2. Secondary: Web Client localhost
+  // 2️⃣ Web client (localhost)
   if (Platform.OS === 'web') {
     return 'http://localhost:3000/api';
   }
 
-  // 3. Android Emulator fallback
-  if (Platform.OS === 'android' && !Constants.expoConfig?.hostUri) {
-    return 'http://10.0.2.2:3000/api';
-  }
-
-  // 4. Mobile Dynamic hostUri detection (Physical / Expo Go)
-  const hostUri = Constants.expoConfig?.hostUri;
+  // 3️⃣ Mobile – dynamic host from Expo Go / physical device
+  const hostUri = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost;
   if (hostUri) {
     const ip = hostUri.split(':')[0];
     return `http://${ip}:3000/api`;
   }
 
-  // Final Fallback: Active local IP
+  // 4️⃣ Android emulator fallback
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:3000/api';
+  }
+
+  // 5️⃣ Hard‑coded LAN fallback
   return 'http://192.168.1.2:3000/api';
 };
 
@@ -37,44 +37,55 @@ const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'x-client-platform': Platform.OS, // Task 4: Add default headers x-client-platform
+    'x-client-platform': Platform.OS,
+    'bypass-tunnel-reminder': 'true',
   },
   timeout: 15000,
 });
 
-// Request Interceptor: Inject token, platform OS, and normalize double '/api' prefixes
+// Request interceptor – inject token, platform header and avoid duplicate `/api` segments
 apiClient.interceptors.request.use(
   async (config) => {
     config.headers['x-client-platform'] = Platform.OS;
 
-    // Prevent double '/api/api' path concatenation if url has a leading '/api'
+    // Guard against `baseURL` ending with `/api` and `url` starting with `/api/`
     if (config.baseURL?.endsWith('/api') && config.url?.startsWith('/api/')) {
-      config.url = config.url.replace('/api/', '/');
+      config.url = config.url.replace(/^\/api\//, '/');
     }
 
     try {
-      const token = await AsyncStorage.getItem('token');
+      const token = (await AsyncStorage.getItem('token')) || (await AsyncStorage.getItem('userToken'));
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-    } catch (error) {
-      console.warn('[apiClient] AsyncStorage token lookup failure:', error);
+    } catch (e) {
+      console.warn('[apiClient] AsyncStorage token lookup failure:', e);
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Uniform connection logging
+// Response interceptor – normalise errors for the UI layer
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isCancel(error) || error.code === 'ECONNABORTED' || error.message?.includes('canceled')) {
       console.log('[apiClient] Request was cancelled or timed out.');
     } else {
-      console.error('[apiClient Connection Fault]', error.response?.status, error.response?.data || error.message);
+      console.error(
+        '[apiClient Connection Fault]',
+        error.response?.status || 'NO_STATUS',
+        error.response?.data?.message || error.message
+      );
     }
-    return Promise.reject(error);
+
+    const formattedError = {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || error.message || 'Network error occurred',
+      data: error.response?.data || null,
+    };
+    return Promise.reject(formattedError);
   }
 );
 

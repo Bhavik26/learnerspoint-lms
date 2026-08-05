@@ -6,6 +6,7 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^next/link$": "<rootDir>/node_modules/next/dist/client/link.js",
   },
+  modulePathIgnorePatterns: ["<rootDir>/.next/"],
   testPathIgnorePatterns: [
     "<rootDir>/.next/",
     "<rootDir>/out/",

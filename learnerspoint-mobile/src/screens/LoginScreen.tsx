@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiRequest, setStoredSession } from '../services/api';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 
@@ -23,7 +24,9 @@ export default function LoginScreen({ navigation, route, onLoginSuccess }: any) 
       });
 
       if (response.success && response.token) {
-        // Save the authenticated user session context
+        // Persist JWT for future requests
+        await AsyncStorage.setItem('userToken', response.token);
+        await AsyncStorage.setItem('token', response.token);
         await setStoredSession({
           userId: response.user?.id || 'unknown',
           email: response.user?.email || email,
@@ -32,17 +35,15 @@ export default function LoginScreen({ navigation, route, onLoginSuccess }: any) 
           token: response.token,
         });
 
-        // Trigger session validation inside navigation state
         const successCallback = onLoginSuccess || route?.params?.onLoginSuccess;
-        if (successCallback) {
-          successCallback();
-        }
+        if (successCallback) successCallback();
       } else {
         Alert.alert('Login Failed', response.error || 'Invalid credentials');
       }
     } catch (error: any) {
       console.error('[API Auth Fault]', error);
-      Alert.alert('Authentication Error', error.message || 'Cannot establish network connection');
+      const errMsg = error.message || error.error || 'Cannot establish network connection';
+      Alert.alert('Authentication Error', errMsg);
     } finally {
       setLoading(false);
     }
@@ -74,8 +75,8 @@ export default function LoginScreen({ navigation, route, onLoginSuccess }: any) 
           autoCapitalize="none"
         />
 
-        <TouchableOpacity 
-          style={styles.button} 
+        <TouchableOpacity
+          style={styles.button}
           onPress={handleLogin}
           disabled={loading}
         >
@@ -86,7 +87,7 @@ export default function LoginScreen({ navigation, route, onLoginSuccess }: any) 
           )}
         </TouchableOpacity>
 
-        <GoogleLoginButton 
+        <GoogleLoginButton
           onLoginSuccess={onLoginSuccess || route?.params?.onLoginSuccess}
           onLoadingStateChange={setLoading}
         />

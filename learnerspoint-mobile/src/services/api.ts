@@ -13,8 +13,8 @@ const getBaseUrl = () => {
     return 'http://localhost:3000';
   }
 
-  // 3. Tertiary: Mobile Dynamic hostUri detection
-  const hostUri = Constants.expoConfig?.hostUri;
+  // 3. Tertiary: Mobile dynamic host detection
+  const hostUri = Constants.manifest?.debuggerHost;
   if (hostUri) {
     const ip = hostUri.split(':')[0];
     return `http://${ip}:3000`;

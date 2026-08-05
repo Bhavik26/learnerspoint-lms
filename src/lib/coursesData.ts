@@ -15,6 +15,7 @@ export interface Course {
    isPublished: boolean;
    modules: CourseModule[];
    slots?: any[];
+   category?: string;
  }
 
 export const COURSES: Course[] = [

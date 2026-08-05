@@ -40,7 +40,7 @@ export default function SubscribePage() {
   const [qrValue, setQrValue] = useState("");
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 1. Viewport & Auth Handshake
   useEffect(() => {
