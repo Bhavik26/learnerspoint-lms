@@ -21,9 +21,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.learnerspointmobile'
+    namespace 'com.learnerspoint.mobile'
     defaultConfig {
-        applicationId 'com.anonymous.learnerspointmobile'
+        applicationId 'com.learnerspoint.mobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -56,6 +56,10 @@ android {
         }
     }
     packagingOptions {
+        pickFirst '**/libc++_shared.so'
+        pickFirst '**/libfbjni.so'
+        pickFirst '**/libreactnativejni.so'
+        pickFirst '**/libjsi.so'
         jniLibs {
             def enableLegacyPackaging = findProperty('expo.useLegacyPackaging') ?: 'false'
             useLegacyPackaging enableLegacyPackaging.toBoolean()

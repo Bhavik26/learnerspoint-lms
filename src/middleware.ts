@@ -14,7 +14,6 @@ const protectedRoutes = [
   "/api/cart",
   "/api/quizzes",
   "/api/payment",
-  "/api/courses",
   "/api/live",
   "/api/ai-chat"
 ];
@@ -23,7 +22,7 @@ const authRoutes = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const origin = request.headers.get("origin") || "";
+  const origin = request.headers.get("origin");
   const allowedOrigins = [
     "http://localhost",
     "capacitor://localhost",
@@ -35,24 +34,28 @@ export async function middleware(request: NextRequest) {
     "http://10.198.70.2:3000",
     "http://10.0.2.2:3000"
   ];
-  const isAllowedOrigin = allowedOrigins.includes(origin) || 
-                          origin.startsWith("http://localhost:") || 
-                          origin.startsWith("http://192.168.") ||
-                          origin.startsWith("http://10.") ||
-                          origin.startsWith("http://172.16.") ||
-                          origin.startsWith("http://172.17.") ||
-                          origin.startsWith("http://172.18.") ||
-                          origin.startsWith("http://172.19.") ||
-                          origin.startsWith("http://172.2") ||
-                          origin.startsWith("http://172.3") ||
-                          origin.endsWith(".loca.lt") ||
-                          origin.endsWith(".amazonaws.com") ||
-                          process.env.NODE_ENV === "development";
+  const isAllowedOrigin = Boolean(
+    origin && (
+      allowedOrigins.includes(origin) || 
+      origin.startsWith("http://localhost:") || 
+      origin.startsWith("http://192.168.") ||
+      origin.startsWith("http://10.") ||
+      origin.startsWith("http://172.16.") ||
+      origin.startsWith("http://172.17.") ||
+      origin.startsWith("http://172.18.") ||
+      origin.startsWith("http://172.19.") ||
+      origin.startsWith("http://172.2") ||
+      origin.startsWith("http://172.3") ||
+      origin.endsWith(".loca.lt") ||
+      origin.endsWith(".amazonaws.com") ||
+      process.env.NODE_ENV === "development"
+    )
+  );
 
   // Handle CORS OPTIONS preflight requests
   if (request.method === "OPTIONS") {
     const response = new NextResponse(null, { status: 204 });
-    if (isAllowedOrigin) {
+    if (isAllowedOrigin && origin) {
       response.headers.set("Access-Control-Allow-Origin", origin);
       response.headers.set("Access-Control-Allow-Credentials", "true");
       response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -122,7 +125,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Inject CORS and Security Headers on response
-  if (isAllowedOrigin) {
+  if (isAllowedOrigin && origin) {
     response.headers.set("Access-Control-Allow-Origin", origin);
     response.headers.set("Access-Control-Allow-Credentials", "true");
   }

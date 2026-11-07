@@ -1,29 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
-import { getStoredToken } from './src/services/api';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 
-export default function App() {
-  const [loading, setLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const checkLoginState = async () => {
-    try {
-      const token = await getStoredToken();
-      setIsLoggedIn(!!token);
-    } catch (e) {
-      setIsLoggedIn(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    checkLoginState();
-  }, []);
+function AppContent() {
+  const { isLoggedIn, loading, logout } = useAuth();
 
   if (loading) {
     return (
@@ -38,12 +22,20 @@ export default function App() {
       <NavigationContainer>
         <AppNavigator 
           isLoggedIn={isLoggedIn}
-          onLoginSuccess={() => setIsLoggedIn(true)}
-          onLogoutSuccess={() => setIsLoggedIn(false)}
+          onLoginSuccess={() => {}}
+          onLogoutSuccess={() => logout()}
         />
         <StatusBar style="light" />
       </NavigationContainer>
     </SafeAreaProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

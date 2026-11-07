@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiRequest, setStoredSession } from '../services/api';
+import { apiRequest, setStoredSession, UserSession } from '../services/api';
 import GoogleLoginButton from '../components/GoogleLoginButton';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen({ navigation, route, onLoginSuccess }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const auth = useAuth();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -24,19 +26,30 @@ export default function LoginScreen({ navigation, route, onLoginSuccess }: any) 
       });
 
       if (response.success && response.token) {
-        // Persist JWT for future requests
-        await AsyncStorage.setItem('userToken', response.token);
-        await AsyncStorage.setItem('token', response.token);
-        await setStoredSession({
+        const session: UserSession = {
           userId: response.user?.id || 'unknown',
           email: response.user?.email || email,
           role: response.user?.role || 'STUDENT',
           name: response.user?.name || '',
           token: response.token,
-        });
+        };
 
+        // 1. Standardize storage across all keys (token, userToken, user, user_session)
+        await AsyncStorage.setItem('token', response.token);
+        await AsyncStorage.setItem('userToken', response.token);
+        await AsyncStorage.setItem('user', JSON.stringify(response.user || session));
+        await setStoredSession(session);
+
+        // 2. Update Global Auth Context
+        if (auth && auth.login) {
+          await auth.login(session);
+        }
+
+        // 3. Trigger callback if passed
         const successCallback = onLoginSuccess || route?.params?.onLoginSuccess;
-        if (successCallback) successCallback();
+        if (successCallback) {
+          successCallback();
+        }
       } else {
         Alert.alert('Login Failed', response.error || 'Invalid credentials');
       }

@@ -15,19 +15,14 @@ const getBaseUrl = () => {
   }
 
   // 3️⃣ Mobile – dynamic host from Expo Go / physical device
-  const hostUri = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost;
+  const hostUri = Constants.expoConfig?.hostUri || Constants.manifest?.debuggerHost || Constants.manifest2?.extra?.expoGo?.debuggerHost;
   if (hostUri) {
     const ip = hostUri.split(':')[0];
     return `http://${ip}:3000/api`;
   }
 
-  // 4️⃣ Android emulator fallback
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:3000/api';
-  }
-
-  // 5️⃣ Hard‑coded LAN fallback
-  return 'http://192.168.1.2:3000/api';
+  // 4️⃣ Default fallback: active PC LAN IP
+  return 'http://10.213.126.2:3000/api';
 };
 
 export const BASE_URL = getBaseUrl();

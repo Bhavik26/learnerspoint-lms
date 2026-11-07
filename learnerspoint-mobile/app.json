@@ -16,7 +16,6 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
       "package": "com.learnerspoint.mobile",
       "googleServicesFile": "./google-services.json"
     },

@@ -14,14 +14,14 @@ const getBaseUrl = () => {
   }
 
   // 3. Tertiary: Mobile dynamic host detection
-  const hostUri = Constants.manifest?.debuggerHost;
+  const hostUri = Constants.expoConfig?.hostUri || Constants.manifest?.debuggerHost || Constants.manifest2?.extra?.expoGo?.debuggerHost;
   if (hostUri) {
     const ip = hostUri.split(':')[0];
     return `http://${ip}:3000`;
   }
 
-  // Final Fallback: Active local IP
-  return 'http://192.168.1.2:3000';
+  // 4. Default fallback: active PC LAN IP
+  return 'http://10.213.126.2:3000';
 };
 
 export const BASE_URL = getBaseUrl();
@@ -53,6 +53,12 @@ export interface UserSession {
 
 export async function getStoredToken(): Promise<string | null> {
   try {
+    const token = await AsyncStorage.getItem('token');
+    if (token) return token;
+
+    const userToken = await AsyncStorage.getItem('userToken');
+    if (userToken) return userToken;
+
     const sessionStr = await AsyncStorage.getItem('user_session');
     if (sessionStr) {
       const session = JSON.parse(sessionStr) as UserSession;
@@ -66,6 +72,19 @@ export async function getStoredToken(): Promise<string | null> {
 
 export async function getStoredUser(): Promise<UserSession | null> {
   try {
+    const userStr = await AsyncStorage.getItem('user');
+    const token = await getStoredToken();
+    if (userStr) {
+      const parsedUser = JSON.parse(userStr);
+      return {
+        userId: parsedUser.id || parsedUser.userId || 'unknown',
+        email: parsedUser.email || '',
+        name: parsedUser.name || '',
+        role: parsedUser.role || 'STUDENT',
+        token: token || '',
+      };
+    }
+
     const sessionStr = await AsyncStorage.getItem('user_session');
     if (sessionStr) {
       return JSON.parse(sessionStr) as UserSession;
@@ -78,6 +97,18 @@ export async function getStoredUser(): Promise<UserSession | null> {
 
 export async function setStoredSession(session: UserSession): Promise<void> {
   try {
+    if (session.token) {
+      await AsyncStorage.setItem('token', session.token);
+      await AsyncStorage.setItem('userToken', session.token);
+    }
+    const userObj = {
+      id: session.userId,
+      userId: session.userId,
+      email: session.email,
+      name: session.name,
+      role: session.role,
+    };
+    await AsyncStorage.setItem('user', JSON.stringify(userObj));
     await AsyncStorage.setItem('user_session', JSON.stringify(session));
   } catch (e) {
     console.error('Failed to save session', e);
@@ -86,10 +117,36 @@ export async function setStoredSession(session: UserSession): Promise<void> {
 
 export async function clearStoredSession(): Promise<void> {
   try {
-    await AsyncStorage.removeItem('user_session');
+    await AsyncStorage.multiRemove(['token', 'userToken', 'user', 'user_session']);
   } catch (e) {
     console.error('Failed to clear session', e);
   }
+}
+
+export async function fetchMeProfile(): Promise<UserSession | null> {
+  try {
+    const token = await getStoredToken();
+    if (!token) return null;
+
+    const response = await apiRequest('/api/auth/me', {
+      method: 'GET',
+    });
+
+    if (response.success && response.user) {
+      const session: UserSession = {
+        userId: response.user.id || response.user.userId || 'unknown',
+        email: response.user.email || '',
+        name: response.user.name || '',
+        role: response.user.role || 'STUDENT',
+        token: token,
+      };
+      await setStoredSession(session);
+      return session;
+    }
+  } catch (e) {
+    console.error('Failed to fetch /api/auth/me:', e);
+  }
+  return null;
 }
 
 export async function apiRequest(path: string, options: RequestInit = {}): Promise<any> {

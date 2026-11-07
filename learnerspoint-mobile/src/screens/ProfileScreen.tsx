@@ -1,13 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getStoredUser, clearStoredSession, UserSession } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getStoredUser, fetchMeProfile, clearStoredSession, UserSession } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProfileScreen({ route, onLogoutSuccess }: any) {
   const [user, setUser] = useState<UserSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const auth = useAuth();
+
+  const loadUserProfile = async () => {
+    setLoading(true);
+    try {
+      // 1. Try fetching live user profile from protected endpoint /api/auth/me
+      const remoteUser = await fetchMeProfile();
+      if (remoteUser) {
+        setUser(remoteUser);
+      } else {
+        // 2. Read from standardized AsyncStorage keys 'user' and 'token'
+        const userStr = await AsyncStorage.getItem('user');
+        const token = (await AsyncStorage.getItem('token')) || (await AsyncStorage.getItem('userToken'));
+
+        if (userStr) {
+          const parsed = JSON.parse(userStr);
+          setUser({
+            userId: parsed.id || parsed.userId || 'unknown',
+            email: parsed.email || '',
+            name: parsed.name || 'Student Account',
+            role: parsed.role || 'STUDENT',
+            token: token || '',
+          });
+        } else {
+          // Fallback to getStoredUser
+          const storedSession = await getStoredUser();
+          if (storedSession) {
+            setUser(storedSession);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load profile data', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    getStoredUser().then(setUser);
+    loadUserProfile();
   }, []);
 
   const handleLogout = () => {
@@ -21,6 +61,9 @@ export default function ProfileScreen({ route, onLogoutSuccess }: any) {
           style: 'destructive',
           onPress: async () => {
             await clearStoredSession();
+            if (auth && auth.logout) {
+              await auth.logout();
+            }
             const logoutCallback = onLogoutSuccess || route?.params?.onLogoutSuccess;
             if (logoutCallback) {
               logoutCallback();
@@ -30,6 +73,16 @@ export default function ProfileScreen({ route, onLogoutSuccess }: any) {
       ]
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3DBFF2" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,6 +119,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#030712',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     paddingHorizontal: 16,
